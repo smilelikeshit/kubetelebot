@@ -1,0 +1,11 @@
+version: '2.4'
+
+services:
+  kubetelebot:
+    build:
+      context: .
+    mem_limit: 100m
+    memswap_limit: 150m
+    restart: always
+    environment:
+      - TELEGRAM_TOKEN_BOT=$TELEGRAM_TOKEN_BOT
