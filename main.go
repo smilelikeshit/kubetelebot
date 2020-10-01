@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -16,26 +15,50 @@ func main() {
 		// You can also set custom API URL.
 		// If field is empty it equals to "https://api.telegram.org".
 
-		Token:  os.Getenv("TELEGRAM_TOKEN_BOT"),
-		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
+		Token:       os.Getenv("TELEGRAM_TOKEN_BOT"),
+		Synchronous: true,
+		Poller:      &tb.LongPoller{Timeout: 10 * time.Second},
 	})
-	fmt.Println(os.Getenv("TELEGRAM_TOKEN_BOT"))
+
+	var (
+		// Universal markup builders.
+		selector = &tb.ReplyMarkup{}
+		// Inline buttons.
+		btnMoon = selector.Data("Moon 🌚", "moon")
+		btnSun  = selector.Data("Sun 🌞", "sun")
+	)
+
+	selector.Inline(
+		selector.Row(btnMoon, btnSun),
+	)
+
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	b.Handle("/start", func(m *tb.Message) {
-		b.Send(m.Chat, "Hello World")
+	b.Handle(&btnMoon, func(c *tb.Callback) {
+		// Required for proper work
+		b.Respond(c, &tb.CallbackResponse{
+			ShowAlert: false,
+		})
+		// Send messages here
+		b.Send(c.Message.Chat, "Imam says 'Bacot'!")
 	})
 
-	// Private to bot
-	b.Handle("/hello", func(m *tb.Message) {
-		if !m.Private() {
-			return
-		}
+	b.Handle(&btnSun, func(c *tb.Callback) {
+		b.Respond(c, &tb.CallbackResponse{
+			ShowAlert: false,
+		})
+		b.Send(c.Message.Chat, "Imam says 'BGST'!")
+	})
 
-		b.Send(m.Chat, "Hello!")
+	b.Handle("/start", func(m *tb.Message) {
+		b.Send(
+			m.Chat,
+			"Word, you choose",
+			selector,
+		)
 	})
 
 	b.Start()
